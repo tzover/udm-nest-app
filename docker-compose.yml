@@ -1,0 +1,52 @@
+version: '3.3'
+services:
+  back:
+    image: ${PROJ_NAME}-back:latest
+    container_name: ${PROJ_NAME}-back
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    volumes:
+      - ./back/app:/home/app
+      - back-volume:/home/app/node_modules
+    ports:
+      - ${DEV_PORT_BACK}:5000
+      - ${PROD_PORT_BACK}:5050
+    depends_on:
+      - postgres
+    tty: true
+  postgres:
+    image: postgres-${PROJ_NAME}:latest
+    container_name: postgres-${PROJ_NAME}
+    build:
+      context: ./postgres
+      dockerfile: Dockerfile
+    volumes:
+      - ./postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      - ./postgres/db:/var/lib/postgresql/data
+    ports:
+      - ${PORT_POSTGRES}:${PORT_POSTGRES}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  pgadmin:
+    image: pgadmin-${PROJ_NAME}:latest
+    container_name: pgadmin-${PROJ_NAME}
+    build:
+      context: ./pgadmin
+      dockerfile: Dockerfile
+    ports:
+      - ${PORT_PGADMIN}:80
+    volumes:
+      - ./pgadmin/data:/var/lib/pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    depends_on:
+      - postgres
+    restart: always
+
+volumes:
+  back-volume:
+    name: ${PROJ_NAME}-back-volume
+    driver: local
